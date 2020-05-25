@@ -27,7 +27,11 @@ export const REPL_UNIT_MAP_FAILURE = 'REPL_UNIT_MAP_FAILURE';
 
 export const replEndpointsRequest = () => ({ type: REPL_ENDPOINTS_REQUEST });
 
-export const replEndpointsSuccess = endpoints => ({ type: REPL_ENDPOINTS_SUCCESS, endpoints });
+export const replEndpointsSuccess = (urls, modes) => ({
+    type: REPL_ENDPOINTS_SUCCESS,
+    urls,
+    modes,
+});
 
 export const replEndpointsFailure = error => ({ type: REPL_ENDPOINTS_FAILURE, error });
 
@@ -71,12 +75,15 @@ export const unitMappingFailure = error => ({ type: REPL_UNIT_MAP_SUCCESS, error
 
 export const replEndpoints = cb => dispatch => {
   dispatch(replEndpointsRequest());
-  return api.getReplEndpoints(endpoints => {
+  return api.getReplEndpoints(response => {
     // FIXME: handle errors
-    dispatch(replEndpointsSuccess(endpoints));
+    const endpoints = new Map(response);
+    const urls = endpoints.map(val => val.url);
+    const modes = endpoints.map(val => val.mode);
+    dispatch(replEndpointsSuccess(urls, modes));
     if (cb) {
       // MAINT: lame, keep immutable map type consistent between this callback and the actual state
-      cb(new Map(endpoints));
+      cb(new Map(urls));
     }
   });
 };

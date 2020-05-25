@@ -1,3 +1,4 @@
+import { Map } from 'immutable';
 import parsePath from 'parse-filepath';
 
 const API_ROOT = '/api/v1';
@@ -94,17 +95,30 @@ class API {
 
   static getReplEndpoints(cb) {
     const origin = document.location.hostname;
+    const getEndpointUrl = (value) => {
+      const url = new URL(value);
+      if (url.hostname === undefined || url.hostname === 'maiden_app_location') {
+          url.hostname = origin;
+      }
+      return url.href;
+    };
+
     fetch('repl-endpoints.json').then(response => {
       response.json().then(data => {
         // this is ugly; if hostname is missing from the ws urls for the repls insert the hostname of this document
-        const config = new Map();
         const template = new Map(Object.entries(data));
-        template.forEach((value, key) => {
-          const url = new URL(value);
-          if (url.hostname === undefined || url.hostname === 'maiden_app_location') {
-            url.hostname = origin;
-          }
-          config.set(key, url.href);
+        const config = template.map(value => {
+            if (typeof value === 'string') {
+                return {
+                    mode: 'text',
+                    url: getEndpointUrl(value),
+                };
+            } else {
+                return {
+                    mode: value.mode,
+                    url: getEndpointUrl(value.url),
+                };
+            }
         });
         cb(config);
       });

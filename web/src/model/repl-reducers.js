@@ -54,15 +54,36 @@ const handleReplEcho = (action, state, input) => {
 };
 
 const handleReplRecieve = (action, state) => {
-  let buffer = state.buffers.get(action.component);
-  action.data.split('\n').forEach(line => {
-    buffer = outputAppend(buffer, state.scrollbackLimit, line);
-  });
+    const mode = state.modes.get(action.component);
+    switch (mode) {
+        case 'hwemu': {
+            const lines = action.data
+              .split('\n')
+              .map(l => l.trim())
+              .filter(l => l.length > 0);
+            if (lines.length === 0) return state;
 
-  return {
-    ...state,
-    buffers: state.buffers.set(action.component, buffer),
-  };
+            const line = lines[lines.length - 1];
+            console.log('got hwemu data', line);
+            const json = JSON.parse(line);
+            return {
+                ...state,
+                hwemu: state.hwemu.setIn([action.component, json.type], json.data),
+            };
+        }
+        case 'text':
+        default: {
+            let buffer = state.buffers.get(action.component);
+            action.data.split('\n').forEach(line => {
+                buffer = outputAppend(buffer, state.scrollbackLimit, line);
+            });
+
+            return {
+                ...state,
+                buffers: state.buffers.set(action.component, buffer),
+            };
+        }
+    }
 };
 
 const handleReplSend = (action, state, conn) => {
@@ -71,12 +92,7 @@ const handleReplSend = (action, state, conn) => {
     console.log("No socket; can't send", action.value, 'to', action.component);
     return state;
   }
-  if (action.component === 'sc') {
-    // lame, sclang expects commands to be terminated with special command bytes
-    socket.send(`${action.value}\x1b`);
-  } else {
-    socket.send(`${action.value}\n`);
-  }
+  socket.send(`${action.value}\n`);
 
   return handleReplEcho(action, state, action.value);
 };
@@ -89,6 +105,8 @@ const initialReplState = {
   buffers: new Map(),
   history: new Map(),
   units: new Map(),
+  modes: new Map(),
+  hwemu: new Map(),
 };
 
 const repl = (state = initialReplState, action) => {
@@ -97,8 +115,13 @@ const repl = (state = initialReplState, action) => {
 
   switch (action.type) {
     case REPL_ENDPOINTS_SUCCESS:
-      console.log('Endpoints:', action.endpoints);
-      return { ...state, endpoints: new Map(action.endpoints) };
+      console.log('Endpoints:', action.urls.toObject());
+      console.log('modes:', action.modes.toObject());
+      return { 
+          ...state, 
+          endpoints: action.urls,
+          modes: action.modes,
+      };
 
     case REPL_CONNECT_DIAL:
       console.log('Connecting to [', action.component, '] ', action.endpoint);

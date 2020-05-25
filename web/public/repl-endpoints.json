@@ -1,4 +1,8 @@
 {
     "matron": "ws://maiden_app_location:5555",
-    "sc": "ws://maiden_app_location:5556"
+    "sc": "ws://maiden_app_location:5556",
+    "hwemu": {
+        "mode": "hwemu",
+        "url": "ws://maiden_app_location:5557"
+    }
 }
