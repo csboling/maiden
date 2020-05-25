@@ -16,12 +16,14 @@ const isConnected = state => component => {
 
 const mapStateToProps = state => {
   // TODO: pull out the buffer and history for the active repl to avoid re-renders if output to no-active repl is received.
-  const { activeRepl, endpoints, buffers, history } = state.repl;
+  const { activeRepl, endpoints, buffers, history, modes, hwemu } = state.repl;
   return {
     activeRepl,
     endpoints,
     buffers,
     history,
+    modes,
+    hwemu,
     hidden: state.ui.replHidden,
     isConnected: isConnected(state),
   };

@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import ReactTooltip from 'react-tooltip';
 import cx from 'classname';
 import Repl from './repl';
+import Emulator from './emulator';
 import ToolBar from './tool-bar';
 import IconButton from './icon-button';
 import { ICONS } from './svg-icons';
@@ -115,22 +116,26 @@ const ReplSwitcher = props => {
     height: height - switcherSize.height,
   };
 
+  const mode = props.modes.get(activeRepl);
+  const ReplComponent = mode === 'hwemu' ? Emulator : Repl;
+
   return (
     <div>
       <div className="repl-switcher-tabs" style={switcherSize}>
         {tabs}
       </div>
-      <Repl
+      <ReplComponent
         className="repl-container"
         {...contentSize}
         activeRepl={activeRepl}
         buffers={props.buffers}
         history={props.history}
+        hwemu={props.hwemu}
         replSend={props.replInput}
         renderChild={!props.isConnected(activeRepl)}
       >
         <ReplConnect {...contentSize} activeRepl={activeRepl} connectAction={props.handleConnect} />
-      </Repl>
+      </ReplComponent>
 
     </div>
   );
