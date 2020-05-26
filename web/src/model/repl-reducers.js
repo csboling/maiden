@@ -64,11 +64,16 @@ const handleReplRecieve = (action, state) => {
             if (lines.length === 0) return state;
 
             const line = lines[lines.length - 1];
-            const json = JSON.parse(line);
-            return {
-                ...state,
-                hwemu: state.hwemu.setIn([action.component, json.type], json.data),
-            };
+            try {
+                const json = JSON.parse(line);
+                return {
+                    ...state,
+                    hwemu: state.hwemu.setIn([action.component, json.type], json.data),
+                };
+            } catch (err) {
+                console.error('could not process hwemu output:', line, err);
+                return state;
+            }
         }
         case 'text':
         default: {
